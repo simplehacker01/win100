@@ -36,7 +36,8 @@ jobs:
     - name: Run Ping Loop
       run: |
         echo "Starting ping loop to keep the session alive..."
-        @echo off
+        @"
         :LOOP
         ping -n 2 127.0.0.1 >nul
         goto LOOP
+        "@
