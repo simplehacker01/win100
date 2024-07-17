@@ -29,8 +29,10 @@ jobs:
     - name: Start Hypertunnel to expose RDP
       run: |
         echo "Starting Hypertunnel to expose RDP..."
-        hypertunnel --port 3389 --name ${{ steps.generate_tunnel_name.outputs.tunnel_name }} > tunnel_output.log &
+        hypertunnel --port 3389  > tunnel_output.log &
         sleep 10
-        cat tunnel_output.log
-    - name: Keep Session Alive
-      run: sleep infinity
+    - name: Keep Session Alive and Display Tunnel URL
+      run: |
+        :LOOP
+        ping -n 1 127.0.0.1 && cat tunnel_output.log
+        goto LOOP
