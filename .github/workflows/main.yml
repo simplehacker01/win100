@@ -7,17 +7,15 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 9999
     steps:
-    - name: Install Chocolatey
-      run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force; `
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
-        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    - name: Install Google Chrome
-      run: choco install googlechrome -y
-    - name: Install Python
-      run: choco install python -y
-    - name: Install PageKite
-      run: pip install pagekite
+    - name: Install Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Install Hypertunnel
+      run: npm install -g hypertunnel
+    - name: Generate Random Tunnel Name
+      id: generate_tunnel_name
+      run: echo "::set-output name=tunnel_name::$(openssl rand -hex 6)"
     - name: Configure Windows RDP
       run: |
         echo "Configuring Windows RDP..."
@@ -28,15 +26,13 @@ jobs:
         net localgroup administrators rajnikant /add
         net user rajnikant /active:yes
         net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
-    - name: Start PageKite to expose RDP
+    - name: Start Hypertunnel to expose RDP
       run: |
-        echo "Starting PageKite to expose RDP..."
-        pagekite.py 3389 okbkckdkab.pagekite.me > pagekite_log.txt &
-    - name: Display PageKite log
+        echo "Starting Hypertunnel to expose RDP..."
+        ht rdp --port 3389 --no-exit --name ${{ steps.generate_tunnel_name.outputs.tunnel_name }} &
+    - name: Display Tunnel Name
       run: |
-        echo "Displaying PageKite log..."
-        Start-Sleep -Seconds 10
-        type pagekite_log.txt
+        echo "Tunnel Name: ${{ steps.generate_tunnel_name.outputs.tunnel_name }}"
     - name: Run Ping Loop
       run: |
         echo "Starting ping loop to keep the session alive..."
