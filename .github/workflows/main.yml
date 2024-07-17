@@ -3,17 +3,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  setup_remote_access:
     runs-on: windows-latest
     timeout-minutes: 9999
     steps:
+    - name: Install Chocolatey
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force; `
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    - name: Install Google Chrome
+      run: choco install googlechrome -y
     - name: Install Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '14'
     - name: Install localtunnel
       run: npm install -g localtunnel
-    - name: Windows10 RDP Configuration
+    - name: Configure Windows RDP
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
@@ -22,11 +29,19 @@ jobs:
         net localgroup administrators rajnikant /add
         net user rajnikant /active:yes
         net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
-    - name: Start localtunnel
+    - name: Start localtunnel to expose RDP
       run: lt --port 3389 --subdomain rajnikantrdp > localtunnel_log.txt &
-    - name: Display localtunnel URL
-      run: type localtunnel_log.txt
-    - name: Run Ping Loop
+    - name: Display connection information
+      run: |
+        echo "------------------------------------------------------------"
+        echo "RDP Connection Info:"
+        echo "Username: rajnikant"
+        echo "Password: P@ssw0rd123!"
+        echo "Use the following URL to connect via RDP:"
+        Start-Sleep -Seconds 10
+        type localtunnel_log.txt
+        echo "------------------------------------------------------------"
+    - name: Keep the session alive
       run: |
         @echo off
         :LOOP
