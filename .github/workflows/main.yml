@@ -32,18 +32,18 @@ jobs:
         copy wallpaper.bat D:\a\wallpaper.bat
     - name: Start Ngrok Tunnel
       run: Start-Process Powershell -ArgumentList '-Noexit -Command ".\ngrok\ngrok.exe tcp 3389"'
-    - name: Save Ngrok URL to Text
-      shell: pwsh
-      run: |
-        Start-Sleep -Seconds 2
-        $ngrokUrl = Invoke-RestMethod -Uri http://localhost:4040/api/tunnels | Select-Object -ExpandProperty tunnels | Select-Object -First 1 -ExpandProperty public_url
-        if ($ngrokUrl) {
-          $ngrokUrl | Out-File -FilePath ngrok_url.txt
-        } else {
-          Write-Error "Ngrok URL could not be retrieved."
-        }
-    - name: Display Ngrok URL
-      run: type ngrok_url.txt
+    # - name: Save Ngrok URL to Text
+    #   shell: pwsh
+    #   run: |
+    #     Start-Sleep -Seconds 2
+    #     $ngrokUrl = Invoke-RestMethod -Uri http://localhost:4040/api/tunnels | Select-Object -ExpandProperty tunnels | Select-Object -First 1 -ExpandProperty public_url
+    #     if ($ngrokUrl) {
+    #       $ngrokUrl | Out-File -FilePath ngrok_url.txt
+    #     } else {
+    #       Write-Error "Ngrok URL could not be retrieved."
+    #     }
+    # - name: Display Ngrok URL
+    #   run: type ngrok_url.txt
     - name: Connect RDP
       run: cmd /c start.bat
     - name: Run Loop Script
