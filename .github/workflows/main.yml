@@ -14,14 +14,13 @@ jobs:
         iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
     - name: Install Google Chrome
       run: choco install googlechrome -y
-    - name: Install Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-    - name: Install localtunnel
-      run: npm install -g localtunnel
+    - name: Install Python
+      run: choco install python -y
+    - name: Install PageKite
+      run: pip install pagekite
     - name: Configure Windows RDP
       run: |
+        echo "Configuring Windows RDP..."
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
@@ -29,20 +28,18 @@ jobs:
         net localgroup administrators rajnikant /add
         net user rajnikant /active:yes
         net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
-    - name: Start localtunnel to expose RDP
-      run: lt --port 3389 --subdomain rajnikantrdp > localtunnel_log.txt &
-    - name: Display connection information
+    - name: Start PageKite to expose RDP
       run: |
-        echo "------------------------------------------------------------"
-        echo "RDP Connection Info:"
-        echo "Username: rajnikant"
-        echo "Password: P@ssw0rd123!"
-        echo "Use the following URL to connect via RDP:"
+        echo "Starting PageKite to expose RDP..."
+        pagekite.py 3389 okbkckdkab.pagekite.me > pagekite_log.txt &
+    - name: Display PageKite log
+      run: |
+        echo "Displaying PageKite log..."
         Start-Sleep -Seconds 10
-        type localtunnel_log.txt
-        echo "------------------------------------------------------------"
-    - name: Keep the session alive
+        type pagekite_log.txt
+    - name: Run Ping Loop
       run: |
+        echo "Starting ping loop to keep the session alive..."
         @echo off
         :LOOP
         ping -n 2 127.0.0.1 >nul
