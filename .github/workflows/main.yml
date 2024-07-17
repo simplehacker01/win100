@@ -7,29 +7,25 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 9999
     steps:
-    - name: Install Chocolatey
-      run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force; `
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
-        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    - name: Install Ngrok via Chocolatey
-      run: choco install ngrok -y
-    - name: Connect Ngrok
-      run: ngrok authtoken 2jMIMDy4cWyZ0rWm9mzeDJUEQN0_5z4SJN3g9mrHhKoLHE4CA
+    - name: Install Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Install localtunnel
+      run: npm install -g localtunnel
     - name: Windows10 RDP Configuration
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-        net user rajnikant Password123! /add
+        net user rajnikant P@ssw0rd123! /add
         net localgroup administrators rajnikant /add
         net user rajnikant /active:yes
         net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
-    - name: Start Ngrok Tunnel
-      run: Start-Process -FilePath ngrok -ArgumentList 'tcp 3389' -NoNewWindow -PassThru | Out-File ngrok_log.txt
-   
-    - name: Display Ngrok URL
-      run: type ngrok_log.txt
+    - name: Start localtunnel
+      run: lt --port 3389 --subdomain rajnikantrdp > localtunnel_log.txt &
+    - name: Display localtunnel URL
+      run: type localtunnel_log.txt
     - name: Run Ping Loop
       run: |
         @echo off
