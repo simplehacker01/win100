@@ -29,7 +29,7 @@ jobs:
     - name: Start Ngrok to expose RDP
       run: |
         echo "Starting Ngrok to expose RDP..."
-        ngrok tcp 3389 --region=us > ngrok_output.log &
+        ngrok tcp --remote-addr=1.tcp.ngrok.io:27210 3389 > ngrok_output.log &
         sleep 10
     - name: Display Ngrok URL
       run: cat ngrok_output.log
