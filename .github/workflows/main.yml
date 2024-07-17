@@ -7,27 +7,35 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 9999
     steps:
-    - name: Download Ngrok
-      run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-    - name: Extract Ngrok File
-      run: Expand-Archive ngrok.zip -DestinationPath .\ngrok
+    - name: Install Chocolatey
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force; `
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    - name: Install Ngrok via Chocolatey
+      run: choco install ngrok -y
     - name: Connect Ngrok
-      run: .\ngrok\ngrok.exe authtoken 2jMIMDy4cWyZ0rWm9mzeDJUEQN0_5z4SJN3g9mrHhKoLHE4CA
+      run: ngrok authtoken 2jMIMDy4cWyZ0rWm9mzeDJUEQN0_5z4SJN3g9mrHhKoLHE4CA
     - name: Windows10 RDP Configuration
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-        net user rajnikant Password123 /add
+        net user rajnikant Password123! /add
         net localgroup administrators rajnikant /add
         net user rajnikant /active:yes
+        net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
     - name: Start Ngrok Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389 > ngrok_log.txt &
+      run: Start-Process -FilePath ngrok -ArgumentList 'tcp 3389' -NoNewWindow -PassThru | Out-File ngrok_log.txt
     - name: Save Ngrok URL to Text
       shell: pwsh
       run: |
         Start-Sleep -Seconds 10
-        $ngrokUrl = (Get-Content ngrok_log.txt) -match 'url=(.*)' | Out-Null; $matches[1] | Out-File -FilePath ngrok_url.txt
+        $ngrokUrl = (Invoke-RestMethod -Uri http://localhost:4040/api/tunnels).tunnels[0].public_url
+        if ($ngrokUrl) {
+          $ngrokUrl | Out-File -FilePath ngrok_url.txt
+        } else {
+          Write-Error "Ngrok URL could not be retrieved."
     - name: Display Ngrok URL
       run: type ngrok_url.txt
     - name: Run Ping Loop
