@@ -18,19 +18,18 @@ jobs:
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-        net user #@$$RSHG123 #@$$RSHG123 /add
-        net localgroup administrators #@$$RSHG123 /add
-        net user #@$$RSHG123 /active:yes
+        net user rajnikant Password123 /add
+        net localgroup administrators rajnikant /add
+        net user rajnikant /active:yes
     - name: Start Ngrok Tunnel
       run: .\ngrok\ngrok.exe tcp 3389 > ngrok_log.txt &
     - name: Save Ngrok URL to Text
       shell: pwsh
       run: |
         Start-Sleep -Seconds 10
-        type ngrok_log.txt
-        
+        $ngrokUrl = (Get-Content ngrok_log.txt) -match 'url=(.*)' | Out-Null; $matches[1] | Out-File -FilePath ngrok_url.txt
     - name: Display Ngrok URL
-      run: type ngrok_log.txt
+      run: type ngrok_url.txt
     - name: Run Ping Loop
       run: |
         @echo off
