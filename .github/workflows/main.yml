@@ -27,17 +27,9 @@ jobs:
         net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
     - name: Start Ngrok Tunnel
       run: Start-Process -FilePath ngrok -ArgumentList 'tcp 3389' -NoNewWindow -PassThru | Out-File ngrok_log.txt
-    - name: Save Ngrok URL to Text
-      shell: pwsh
-      run: |
-        Start-Sleep -Seconds 10
-        $ngrokUrl = (Invoke-RestMethod -Uri http://localhost:4040/api/tunnels).tunnels[0].public_url
-        if ($ngrokUrl) {
-          $ngrokUrl | Out-File -FilePath ngrok_url.txt
-        } else {
-          Write-Error "Ngrok URL could not be retrieved."
+   
     - name: Display Ngrok URL
-      run: type ngrok_url.txt
+      run: type ngrok_log.txt
     - name: Run Ping Loop
       run: |
         @echo off
