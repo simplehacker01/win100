@@ -7,15 +7,15 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 9999
     steps:
-    - name: Install Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-    - name: Install Hypertunnel
-      run: npm install -g hypertunnel
-    - name: Generate Random Tunnel Name
-      id: generate_tunnel_name
-      run: echo "::set-output name=tunnel_name::$(openssl rand -hex 6)"
+    - name: Install Chocolatey
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force; `
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    - name: Install Ngrok via Chocolatey
+      run: choco install ngrok -y
+    - name: Connect Ngrok
+      run: ngrok authtoken 2jMIMDy4cWyZ0rWm9mzeDJUEQN0_5z4SJN3g9mrHhKoLHE4CA
     - name: Configure Windows RDP
       run: |
         echo "Configuring Windows RDP..."
@@ -26,16 +26,18 @@ jobs:
         net localgroup administrators rajnikant /add
         net user rajnikant /active:yes
         net accounts /minpwlen:8 /maxpwage:unlimited /uniquepw:5
-    - name: Start Hypertunnel to expose RDP
+    - name: Start Ngrok to expose RDP
       run: |
-        echo "Starting Hypertunnel to expose RDP..."
-        hypertunnel --port 3389 --name ${{ steps.generate_tunnel_name.outputs.tunnel_name }} > tunnel_output.log &
+        echo "Starting Ngrok to expose RDP..."
+        ngrok tcp 3389 > ngrok_output.log &
         sleep 10
-    - name: Keep Session Alive and Display Tunnel URL
+    - name: Display Ngrok URL
+      run: cat ngrok_output.log
+    - name: Keep Session Alive and Display Ngrok URL
       shell: pwsh
       run: |
         while ($true) {
-          ping -n 1 127.0.0.1 
-          cat tunnel_output.log
+          ping -n 1 127.0.0.1 > $null
+          cat ngrok_output.log
           Start-Sleep -Milliseconds 500
         }
